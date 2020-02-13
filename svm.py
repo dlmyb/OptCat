@@ -1,6 +1,7 @@
 from mpi4py import MPI
 import cvxpy as cp
 import numpy as np
+from consensus import reduce
 
 norm, sqrt = np.linalg.norm, np.sqrt
 
@@ -8,17 +9,6 @@ comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size()
 
-def consenus(target, func=np.mean, filename=None):
-    target_buf, res = None, None
-    if rank == 0:
-        target_buf = np.zeros([size] + list(target.shape))
-    comm.Gather(target, target_buf, root = 0)
-    if rank == 0 and filename is not None:
-        np.save("tmp/" + filename, target_buf)
-    if rank == 0:
-        res = func(target_buf, axis=0)
-    res = comm.bcast(res, root=0)
-    return res
 
 def hinge_loss(A, x):
     p = 1 + A.dot(x)
@@ -77,17 +67,17 @@ while True:
         cp.Minimize(cp.sum(cp.pos(cp.matmul(A, x_var)+1)) + rho/2 * cp.sum_squares(x_var-z+u))
     ).solve(verbose=False, solver=cp.CVXOPT)
     x = x_var.value
-    x_ave = consenus(x, filename="xvals/x{}.npy".format(i))
+    x_ave = reduce(x, filename="xvals/x{}.npy".format(i))
 
     # Update z
     z_old = z
     x_hat = alpha*x +(1-alpha) * z_old
-    z = rho/(1/C + size*rho) * size * consenus(x_hat+u)
+    z = rho/(1/C + size*rho) * size * reduce(x_hat+u)
 
     # Update u
     u += (x_hat - z)
 
-    r_norm = consenus(x-z, func=max_sigma)
+    r_norm = reduce(x-z, func=max_sigma)
     s_norm = norm(-rho*(z-z_old))
     eps_pri = sqrt(M+1)*ABSTOL + RELTOL*max([norm(x), norm(-z)])
     eps_dual = sqrt(M+1)*ABSTOL + RELTOL*norm(rho*u)
