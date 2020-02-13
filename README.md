@@ -1,8 +1,8 @@
 # OptCat
 
-OptCat is a codebase relating consensus optimization hosted by Dr.Han, written by
+OptCat is a codebase relating consensus optimization hosted by Dr.Han, supported by
 
-* Shuo Han (hanshuo@uic.edu)
+* Shuo Han [https://hanshuo.people.uic.edu/site](https://hanshuo.people.uic.edu/site/)
 * Yinbin Ma (mayinbing12@gmail.com) 01/2020 - 05/2020
 
 ## Programing principle
