@@ -1,7 +1,8 @@
 from mpi4py import MPI
 import numpy as np
 import cvxpy as cp
-from consensus import GCon, matrix, mpireduce
+from consensus import GCon, mpireduce
+from consensus import matrix
 
 
 comm = MPI.COMM_WORLD
