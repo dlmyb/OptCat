@@ -1,7 +1,7 @@
 from mpi4py import MPI
 import numpy as np
 import cvxpy as cp
-from consensus import GCon, matrix
+from consensus import GCon, matrix, mpireduce
 
 
 comm = MPI.COMM_WORLD
@@ -17,9 +17,9 @@ if rank == 0:
     # Generate data points
     np.random.seed(0)
     N = batch * size
-    X1 = np.random.normal(scale=[1, 0.8], size=[N, M]) + np.array([0, 1.5])
-    X2 = np.random.normal(scale=[1, 0.5], size=[N, M]) + np.array([1.5, 0])
-    # np.save("tmp/data.npy", np.stack([X1, X2]))
+    X1 = np.random.normal(scale=[1, 0.8], size=[N, M]) + np.array([0, 2])
+    X2 = np.random.normal(scale=[1, 0.5], size=[N, M]) + np.array([2, 0])
+    np.save("tmp/data.npy", np.stack([X1, X2]))
 
     AA = np.vstack([
         -1 * np.hstack([X1, np.ones([N, 1])]),
@@ -40,7 +40,7 @@ comm.Scatter(WW, W, root=0)
 
 # Training period
 
-MAX_ITER = 500 + 1
+MAX_ITER = 200 + 1
 rho, C = 1, 1
 
 z, u, x = np.zeros(M+1), np.zeros(M+1), np.zeros(M+1)
@@ -65,7 +65,7 @@ while True:
     z = size * rho/(1/C + size*rho) * (x_ave + u_ave)
     u = u + x - z
     
-    if i % 100 == 0:
-        print(rank, i, x, z, u)
+    if i % 20 == 0:
+        mpireduce(x, filename="xvals/xval{:03}.npy".format(i))
 
     i += 1

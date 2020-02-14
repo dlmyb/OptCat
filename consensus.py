@@ -7,10 +7,10 @@ import numpy as np
 import matrix
 
 comm = MPI.COMM_WORLD
-rank, size = comm.Get_rank(), comm.Get_size
+rank, size = comm.Get_rank(), comm.Get_size()
 
 
-def reduce(target, func=np.mean, filename=None):
+def mpireduce(target, func=np.mean, filename=None):
     """
     Centralized consensus module based on MPI
     target: numpy array
@@ -21,7 +21,7 @@ def reduce(target, func=np.mean, filename=None):
     comm = MPI.COMM_WORLD
     if rank == 0:
         target_buf = np.zeros([size] + list(target.shape))
-    comm.Gather(target, target_buf, root = 0)
+    comm.Gather(target, target_buf, root=0)
     if rank == 0 and filename is not None:
         np.save("tmp/" + filename, target_buf)
     if rank == 0:

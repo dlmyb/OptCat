@@ -1,7 +1,7 @@
 from mpi4py import MPI
 import cvxpy as cp
 import numpy as np
-from consensus import reduce
+from consensus import mpireduce
 
 norm, sqrt = np.linalg.norm, np.sqrt
 
@@ -67,17 +67,17 @@ while True:
         cp.Minimize(cp.sum(cp.pos(cp.matmul(A, x_var)+1)) + rho/2 * cp.sum_squares(x_var-z+u))
     ).solve(verbose=False, solver=cp.CVXOPT)
     x = x_var.value
-    x_ave = reduce(x, filename="xvals/x{}.npy".format(i))
+    x_ave = mpireduce(x, filename="xvals/x{}.npy".format(i))
 
     # Update z
     z_old = z
     x_hat = alpha*x +(1-alpha) * z_old
-    z = rho/(1/C + size*rho) * size * reduce(x_hat+u)
+    z = rho/(1/C + size*rho) * size * mpireduce(x_hat+u)
 
     # Update u
     u += (x_hat - z)
 
-    r_norm = reduce(x-z, func=max_sigma)
+    r_norm = mpireduce(x-z, func=max_sigma)
     s_norm = norm(-rho*(z-z_old))
     eps_pri = sqrt(M+1)*ABSTOL + RELTOL*max([norm(x), norm(-z)])
     eps_dual = sqrt(M+1)*ABSTOL + RELTOL*norm(rho*u)
