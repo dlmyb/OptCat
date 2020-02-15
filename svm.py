@@ -75,7 +75,7 @@ while True:
     z = rho/(1/C + size*rho) * size * mpireduce(x_hat+u)
 
     # Update u
-    u += (x_hat - z)
+    u = u + (x_hat - z)
 
     r_norm = mpireduce(x-z, func=max_sigma)
     s_norm = norm(-rho*(z-z_old))
