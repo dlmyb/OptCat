@@ -32,10 +32,9 @@ def w_feasible(W):
     if W.ndim != 2 or (W.ndim == 2 and W.shape[0] != W.shape[1]):
         return False
     m, _ = W.shape
-    # symmetric and doubly stochastic matrix
+    # symmetric and stochastic matrix
     return np.all(W == W.T) == True and \
-           np.all(np.sum(W, axis=1) == np.ones(m)) == True and \
-           np.all(np.sum(W, axis=0) == np.ones(m)) == True
+           np.all(np.sum(W, axis=1) == np.ones(m)) == True
 
 
 def ring_matrix(n):

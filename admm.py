@@ -1,6 +1,6 @@
 from mpi4py import MPI
 import numpy as np
-from consensus import GCon, matrix
+from consensus import matrix, mpireduce
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -33,7 +33,6 @@ rho = 1
 
 # x = np.zeros([M])
 y = np.zeros([M])
-x_con = GCon(M, W)
 x_ave = np.zeros([M])
 STOP_FLAG, i = False, 0
 
@@ -45,11 +44,10 @@ while True:
         break
 
     x = A_inv.dot(ATb + x_ave - y)
-    x_ave = x_con(x)
+    x_ave = mpireduce(x)
     y = y + rho * (x - x_ave)
 
     if i % 50 == 0:
         print(i, rank, x_ave, y)
     
     i += 1
-
