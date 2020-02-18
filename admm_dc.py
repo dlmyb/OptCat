@@ -1,6 +1,7 @@
 from mpi4py import MPI
 import numpy as np
 from consensus import GCon, matrix
+from scipy.linalg import lu_factor, lu_solve
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -13,6 +14,7 @@ W = np.zeros(size)
 
 if rank == 0:
     np.random.seed(0)
+    # Generate data on node 0
     AA = np.random.randn(size*batch, M)
     bb = np.random.randn(size*batch)
 
@@ -37,14 +39,14 @@ x_con = GCon(M, W)
 x_ave = np.zeros([M])
 STOP_FLAG, i = False, 0
 
-A_inv = np.linalg.inv(A.T.dot(A) + rho * np.eye(M))
-ATb = A.T.dot(b)
+lu, piv = lu_factor((A.T @ A) + rho * np.eye(M))
+ATb = A.T @ b
 
 while True:
     if STOP_FLAG or i >= MAX_ITER:
         break
 
-    x = A_inv.dot(ATb + x_ave - y)
+    x = lu_solve((lu, piv), ATb + x_ave - y)
     x_ave = x_con(x)
     y = y + rho * (x - x_ave)
 
