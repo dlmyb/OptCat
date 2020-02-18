@@ -13,9 +13,10 @@ Why Python?
 
 Required libraries and reasons?
 
-    mpi4py, numpy, cvxpy.
+    numpy, scipy: for linear algebra and solving linear system equation.
+    mpi4py: providing distributed functions.
+    cvxpy: providing proximal solutions. 
 
 Miscellany
 
-* All submited python script files follow PEP8 and are formated by [AUTOPEP8](https://github.com/hhatto/autopep8).
 * Online document is at [OptCat](https://opt.yinbin.ma).
