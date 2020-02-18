@@ -18,7 +18,7 @@ if rank == 0:
     AA = np.random.randn(size*batch, M)
     bb = np.random.randn(size*batch)
 
-    print("Optimal value:", np.linalg.inv(AA.T.dot(AA)).dot(AA.T).dot(bb))
+    print("Optimal value:", np.linalg.solve(AA.T @ AA, AA.T @ bb))
     
     AA = AA.reshape([size, batch, M])
     bb = bb.reshape([size, batch])
