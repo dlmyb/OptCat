@@ -34,8 +34,8 @@ if rank == 0:
     comm.Bcast(mem, root=0)
 win = MPI.Win.Create(mem, comm=comm)
 
-MAX_ITER = 500 + 1
-s, eta = 0.1, 1
+MAX_ITER = 200 + 1
+lr = 0.01 / size
 
 if rank == 0:
     buf = np.zeros([size-1, M])
@@ -50,11 +50,11 @@ if rank == 0:
     recv = 0
     for i in range((size-1)*MAX_ITER):
         # Check which worker send its gradient
-        while not comm.Iprobe(recv+1):
-            recv = (recv+1) % (size-1)
-        df_last = buf[recv]
-        comm.Recv(df_new, recv+1)
-        lr = s * np.sqrt(s / (i + s))
+        st = MPI.Status()
+        comm.Probe(status=st)
+        recv = st.Get_source()
+        df_last = buf[recv-1]
+        comm.Recv(df_new, recv)
 
         x = x - lr*(df_new - df_last + np.sum(buf, axis=0)/size)
 
@@ -62,10 +62,10 @@ if rank == 0:
         win.Put(x, 0)
         win.Unlock(0)
 
-        buf[recv] = df_new
+        buf[recv-1] = df_new
 
         # send wake up signal
-        comm.send(0, recv+1)
+        comm.send(0, recv)
 
         if i % 200 == 0:
             print(i, x)
