@@ -15,74 +15,69 @@ size = comm.Get_size()
 
 
 M, batch = 5, 5
+L, mu = 0, 0
 AA, bb = None, None
 
-# dsts = np.arange(size, dtype=np.int)
 dsts = np.hstack([0, np.ones(size-1, np.int)])
 
 if rank == 0:
-    # np.random.seed(0)
-    # AA = np.random.randn(600, M) * 5
-    # bb = np.random.randn(600, 1) * 5
     AA = np.random.randn(np.sum(dsts)*batch, M) * 5
     bb = np.random.randn(np.sum(dsts)*batch, 1) * 5
+    eigs = np.linalg.eigvals(AA.T @ AA)
+    L, mu = np.max(eigs), np.min(eigs)
 
     print("Optimal value:", np.linalg.solve(AA.T @ AA, AA.T @ bb).flatten())
+    print("L, mu:", L, mu)
 
 A = scatter(AA, dsts)
 b = scatter(bb, dsts).flatten()
 
-mem = np.zeros([M])
+mem = np.zeros(M)
 if rank == 0:
     mem = np.random.randn(M) * 5
-    comm.Bcast(mem, root=0)
 win = MPI.Win.Create(mem, comm=comm)
 
-MAX_ITER = 200 + 1
-lr = 0.05 / size
+MAX_ITER = 200 + 1 # +1 could print info when loop ends.
+EPOCH = 32
 
 if rank == 0:
+    lr = 0.1/L
     buf = np.zeros([size-1, M])
-    df_new = np.zeros([M])
+    df_new = np.zeros(M)
     x = np.copy(mem)
-
-    reqs = []
-    for i in range(size-1):
-        reqs.append(comm.Irecv(buf[i], source=i+1))
-    MPI.Request.Waitall(reqs)
     
     dsts = np.arange(1, size)
-    dists = Counter()
-    for i in range(size*MAX_ITER):
+    # dists = Counter()
+    for i in range(MAX_ITER):
+        for j in range(size-1):
+            comm.send(1, j+1)
+            comm.Recv(buf[j], j+1)
+        for j in range(EPOCH):
+            dst = r.choice(dsts)
+            # dists.update([dst])
+            # Send a wake up signal
+            comm.send(1, dst)
+            df_last = buf[dst-1]
+            comm.Recv(df_new, dst)
 
-        dst = r.choice(dsts)
-        dists.update([dst])
-        # Send a wake up signal
-        comm.send(1, dst)
-        df_last = buf[dst-1]
-        comm.Recv(df_new, dst)
-        buf[dst-1] = df_new
+            x = x - lr*(df_new - df_last + np.sum(buf, axis=0)/size)
 
-        x = x - lr*(df_new - df_last + np.sum(buf, axis=0)/size)
-
-        win.Lock(0)
-        win.Put(x, 0)
-        win.Unlock(0)
-
-        if i % 200 == 0:
+            win.Lock(0, lock_type=MPI.LOCK_EXCLUSIVE)
+            win.Put(x, 0)
+            win.Unlock(0)
+        if i % 10 == 0:
             print(i, x)
     
     for dst in dsts:
         # Tell all workers stop
         comm.send(0, dst)
-    print(dists)
 
+    # print(dists)
 
 else:
-    x = np.zeros([M]) + 5
-    comm.Send(df(x, A, b), 0)
+    x = np.zeros(M)
     while comm.recv(source=0):
-        win.Lock(0)
+        win.Lock(0, lock_type=MPI.LOCK_SHARED)
         win.Get(x, 0)
         win.Unlock(0)
         comm.Send(df(x, A, b), 0)

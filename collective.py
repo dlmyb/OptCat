@@ -53,3 +53,18 @@ def Gather(sendbuf, recvbuf, root):
         if target == rank:
             continue
         comm.Recv(recvbuf[target], target)
+
+
+def Bcast_nonblocking(buf, root):
+    """
+    Broadcast buf in root node to all nodes using non-blocking primitives
+    buf: numpy.array
+    root: int
+    """
+    if root != rank:
+        comm.Recv(buf, root)
+        return
+    for target in range(size):
+        if target == rank:
+            continue
+        comm.Isend(buf, target)
