@@ -24,7 +24,7 @@ L, mu = 0, 0
 AA, bb = None, None
 
 dsts = np.hstack([0, np.ones(size-1, np.int)])
-dsts = np.arange(size)
+# dsts = np.arange(size)
 
 if rank == 0:
     AA = np.random.randn(np.sum(dsts)*batch, M) * 0.01
@@ -44,8 +44,8 @@ if rank == 0:
 win = MPI.Win.Create(x, comm=comm)
 
 MAX_ITER = 3000 + 1 # +1 could print info when loop ends.
-EPOCH = 5
-TAU = 2
+EPOCH = 16
+TAU = 4
 
 if rank == 0:
     lr = 100
@@ -68,8 +68,11 @@ if rank == 0:
             dst_round = r.choices(dsts, k=min(TAU, EPOCH-j))
 
             # Send a wake up signal
+            reqs = []
             for dst in dst_round:
-                comm.send(1, dst)
+                reqs.append(comm.isend(1, dst))
+            MPI.Request.Waitall(reqs)
+
             for k in range(min(TAU, EPOCH-j)):
                 st = MPI.Status()
                 comm.probe(status=st)
