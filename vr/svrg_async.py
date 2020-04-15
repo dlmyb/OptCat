@@ -60,6 +60,7 @@ if rank == 0:
         x -= x - x_stored # x = x_stored
         for j in range(size-1):
             comm.send(1, j+1)
+            comm.Send(x, j+1)
             comm.Recv(buf[j], j+1)
 
         sample = r.randint(a=0, b=EPOCH-1)
@@ -68,15 +69,11 @@ if rank == 0:
             dst_round = r.choices(dsts, k=min(TAU, EPOCH-j))
 
             # Send a wake up signal
-            reqs = []
             for dst in dst_round:
-                reqs.append(comm.isend(1, dst))
-            MPI.Request.Waitall(reqs)
+                comm.send(1, dst)
+                comm.Send(x, dst)
 
-            for k in range(min(TAU, EPOCH-j)):
-                st = MPI.Status()
-                comm.probe(status=st)
-                dst = st.Get_source()
+            for dst in dst_round:
                 df_last = buf[dst-1]
                 comm.Recv(df_new, dst)
                 x -= lr*(df_new - df_last + np.sum(buf, axis=0)/size)
@@ -97,8 +94,6 @@ if rank == 0:
 else:
     x = np.zeros(M)
     while comm.recv(source=0):
-        win.Lock(0, lock_type=MPI.LOCK_SHARED)
-        win.Get(x, 0)
-        win.Unlock(0)
+        comm.Recv(x, 0)
         comm.Send(df(x, A, b), 0)
 
