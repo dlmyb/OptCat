@@ -66,8 +66,7 @@ if rank == 0:
     df_new = np.zeros(M)
     x_stored = np.copy(x)
     
-    dsts = np.arange(1, size)
-    # dists = Counter()
+    dst_range = np.arange(1, size)
     for i in range(MAX_ITER):
         logging.info("Starting epoch {}".format(i))
         x -= x - x_stored # x = x_stored
@@ -80,7 +79,7 @@ if rank == 0:
         sample = r.randint(a=0, b=EPOCH-1)
         j = 0
         while j < EPOCH:
-            dst_round = r.choices(dsts, k=min(TAU, EPOCH-j))
+            dst_round = r.choices(dst_range, k=min(TAU, EPOCH-j))
             logging.info("List is {}".format(dst_round))
 
             # Send a wake up signal
@@ -92,6 +91,7 @@ if rank == 0:
                 st = MPI.Status()
                 comm.probe(status=st)
                 dst = st.Get_source()
+
                 df_last = buf[dst-1]
                 Recv(df_new, source=dst)
                 x -= lr*(df_new - df_last + np.sum(buf, axis=0)/size)
