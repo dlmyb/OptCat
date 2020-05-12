@@ -32,11 +32,11 @@ if rank == 0:
 A = scatter(AA, dsts)
 b = scatter(bb, dsts).flatten()
 
-mem = np.zeros([M])
+x = np.zeros([M])
 if rank == 0:
-    mem = np.random.randn(M) * 5
-    comm.Bcast(mem, root=0)
-win = MPI.Win.Create(mem, comm=comm)
+    x = np.random.randn(M) * 5
+comm.Bcast(x, root=0)
+win = MPI.Win.Create(x, comm=comm)
 
 MAX_ITER = 200 + 1
 lr = 0.05 / size
@@ -44,35 +44,32 @@ lr = 0.05 / size
 if rank == 0:
     buf = np.zeros([size-1, M])
     df_new = np.zeros([M])
-    x = np.copy(mem)
 
     reqs = []
     for i in range(size-1):
         reqs.append(comm.Irecv(buf[i], source=i+1))
     MPI.Request.Waitall(reqs)
     
-    dsts = np.arange(1, size)
+    dst_range = np.arange(1, size) # Uniformly sample.
     dists = Counter()
     for i in range(size*MAX_ITER):
 
-        dst = r.choice(dsts)
+        dst = r.choice(dst_range)
         dists.update([dst])
+
         # Send a wake up signal
         comm.send(1, dst)
+
         df_last = buf[dst-1]
         comm.Recv(df_new, dst)
         buf[dst-1] = df_new
 
-        x = x - lr*(df_new - df_last + np.sum(buf, axis=0)/size)
-
-        win.Lock(0)
-        win.Put(x, 0)
-        win.Unlock(0)
+        x -= lr*(df_new - df_last + np.sum(buf, axis=0)/size)
 
         if i % 200 == 0:
             print(i, x)
     
-    for dst in dsts:
+    for dst in np.unique(dst_range):
         # Tell all workers stop
         comm.send(0, dst)
     print(dists)

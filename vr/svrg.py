@@ -23,6 +23,7 @@ dsts = np.hstack([0, np.ones(size-1, np.int)])
 if rank == 0:
     AA = np.random.randn(np.sum(dsts)*batch, M) * 5
     bb = np.random.randn(np.sum(dsts)*batch, 1) * 5
+    
     eigs = np.linalg.eigvals(AA.T @ AA)
     L, mu = np.max(eigs), np.min(eigs)
 
@@ -32,10 +33,10 @@ if rank == 0:
 A = scatter(AA, dsts)
 b = scatter(bb, dsts).flatten()
 
-mem = np.zeros(M)
+x = np.zeros(M)
 if rank == 0:
-    mem = np.random.randn(M) * 5
-win = MPI.Win.Create(mem, comm=comm)
+    x = np.random.randn(M) * 5
+win = MPI.Win.Create(x, comm=comm)
 
 MAX_ITER = 200 + 1 # +1 could print info when loop ends.
 EPOCH = 32
@@ -44,31 +45,27 @@ if rank == 0:
     lr = 0.1/L
     buf = np.zeros([size-1, M])
     df_new = np.zeros(M)
-    x = np.copy(mem)
     
-    dsts = np.arange(1, size)
+    dst_range = np.arange(1, size)
     # dists = Counter()
     for i in range(MAX_ITER):
         for j in range(size-1):
             comm.send(1, j+1)
             comm.Recv(buf[j], j+1)
         for j in range(EPOCH):
-            dst = r.choice(dsts)
+            dst = r.choice(dst_range)
             # dists.update([dst])
             # Send a wake up signal
             comm.send(1, dst)
             df_last = buf[dst-1]
             comm.Recv(df_new, dst)
 
-            x = x - lr*(df_new - df_last + np.sum(buf, axis=0)/size)
+            x -= lr*(df_new - df_last + np.sum(buf, axis=0)/size)
 
-            win.Lock(0, lock_type=MPI.LOCK_EXCLUSIVE)
-            win.Put(x, 0)
-            win.Unlock(0)
         if i % 10 == 0:
             print(i, x)
     
-    for dst in dsts:
+    for dst in dst_range:
         # Tell all workers stop
         comm.send(0, dst)
 

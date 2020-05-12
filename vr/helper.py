@@ -5,6 +5,14 @@ comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size()
 
+
+"""
+You could use scatter function substitute built-in comm.scatter
+It support heterogeneous data scattering
+dsts is the portion,
+e.g. dsts = {1: 1, 2: 1, 3: 2} -> scatter one part data to node 1 and 2, two parts to node 3.
+when dsts is None, all nodes will get the same dimension data.
+"""
 def scatter(sendbuf, dsts=None, root=0):
     if dsts is None:
         dsts_round = np.ones(size, np.int)
