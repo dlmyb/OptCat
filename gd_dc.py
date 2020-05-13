@@ -12,8 +12,8 @@ size = comm.Get_size()
 
 M, batch = 2, 50
 A, b = np.zeros([batch, M]), np.zeros([batch])
-AA, WW, bb = None, None, None
 W = np.zeros(size)
+AA, WW, bb = None, None, None
 
 if rank == 0:
     np.random.seed(0)
@@ -24,11 +24,13 @@ if rank == 0:
     
     AA = AA.reshape([size, batch, M])
     bb = bb.reshape([size, batch])
+    WW = matrix.ring_matrix(size)
 
 comm.Scatter(AA, A, root=0)
 comm.Scatter(bb, b, root=0)
+comm.Scatter(WW, W, root=0)
 
-MAX_ITER = 200 + 1
+MAX_ITER = 600 + 1
 STOP_FLAG, i, lr = False, 0, 0.001
 
 x = np.zeros([M])
@@ -44,13 +46,10 @@ while True:
     dx = df(x_hat, A, b)
     dx_hat = dx_con(dx)
 
-    # Don't write as
-    # # x -= lr * dx_hat
-    x = x - lr * dx_hat
+    x -= lr * dx_hat
     x_hat = x_con(x)
 
-    if i % 40 == 0:
+    if i % 100 == 0:
         print(i, rank, x_hat, dx_hat)
 
     i += 1
-

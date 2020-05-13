@@ -3,3 +3,5 @@ __pycache__
 tmp
 run.ipynb
 utils.py
+test*
+*.log

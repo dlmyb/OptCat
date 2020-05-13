@@ -9,7 +9,7 @@ OptCat is a codebase relating consensus optimization hosted by Dr.Han, supported
 
 Why Python?
 
-    Python has many well elaborate open-source libraries in optimization area.
+    Python has many elaborate open-source libraries for optimization.
 
 Required libraries and reasons?
 
@@ -17,6 +17,7 @@ Required libraries and reasons?
     mpi4py: providing distributed functions.
     cvxpy: providing proximal solutions. 
 
-Miscellany
+## Miscellany
 
-* Online document is at [OptCat](https://opt.yinbin.ma).
+* Document is in `doc` folder.
+* To run a specific program, `mpirun -n [num_proc] ...`.

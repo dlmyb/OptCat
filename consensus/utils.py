@@ -63,5 +63,5 @@ class GCon(object):
         # Updating formula, see Shuo Han's CSL letter, formula (3)
         result = np.sum(self.buf, axis=0) + self.w[rank] * \
             self.s_last + (x - self.x_last)
-        self.x_last, self.s_last = x, result
+        self.x_last, self.s_last = np.copy(x), result
         return result

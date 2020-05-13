@@ -1,4 +1,3 @@
-from mpi4py import MPI
 import numpy as np
 
 N, BATCH, M = 8, 50, 2

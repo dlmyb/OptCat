@@ -5,16 +5,27 @@ from collections import Counter
 from helper import scatter
 import logging
 
+# If you don't need log, set it False
+# log is to make sure it's async
+DEBUG = True
+
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size()
 
 r = random.Random()
-logging.basicConfig(filename="svrg.log", level=logging.INFO, format='%(asctime)s: P{}: %(message)s'.format(rank))
+
+if DEBUG:
+    logging.basicConfig(filename="svrg.log", level=logging.INFO, format='{}: P{}: %(message)s'.format(MPI.Wtime(), rank))
 
 def df(x, A, b):
     return A.T @ (A @ x - b)
 
+
+"""
+A useful function wrapper
+Log timestamp, func name, paras.
+"""
 def log_func(func):
     p = func.__name__
     def tmp(*args, **kwargs):
@@ -24,8 +35,12 @@ def log_func(func):
         return ret
     return tmp
 
-Send = log_func(comm.Send)
-Recv = log_func(comm.Recv)
+if DEBUG:
+    Send = log_func(comm.Send)
+    Recv = log_func(comm.Recv)
+else:
+    Send = comm.Send
+    Recv = comm.Recv
 
 def eval_theta(L, m, lamba, eta, tau):
     t1 = 4*L * (eta + L*tau*tau*eta*eta) / (1-2*L*L*eta*eta*tau*tau)
@@ -36,8 +51,8 @@ M, batch = 5, 5
 L, mu = 0, 0
 AA, bb = None, None
 
-dsts = np.hstack([0, np.ones(size-1, np.int)])
-# dsts = np.arange(size)
+dsts = np.hstack([0, np.ones(size-1, np.int)]) # Each node get one part data
+# dsts = np.arange(size) # heterogeneous setting
 
 if rank == 0:
     AA = np.random.randn(np.sum(dsts)*batch, M) * 0.01
@@ -57,7 +72,7 @@ if rank == 0:
 
 MAX_ITER = 500 + 1 # +1 could print info when loop ends.
 EPOCH = 8
-TAU = 3
+TAU = 3 # See [Reddie et. al.]
 
 if rank == 0:
     lr = 1/L
@@ -74,13 +89,15 @@ if rank == 0:
             comm.send(1, j+1)
             Send(x, dest=j+1)
             Recv(buf[j], source=j+1)
-        logging.info("finished sync buf")
+        if DEBUG:
+            logging.info("finished sync buf")
 
         sample = r.randint(a=0, b=EPOCH-1)
         j = 0
         while j < EPOCH:
             dst_round = r.choices(dst_range, k=min(TAU, EPOCH-j))
-            logging.info("List is {}".format(dst_round))
+            if DEBUG:
+                logging.info("List is {}".format(dst_round))
 
             # Send a wake up signal
             for dst in dst_round:
@@ -95,7 +112,8 @@ if rank == 0:
                 df_last = buf[dst-1]
                 Recv(df_new, source=dst)
                 x -= lr*(df_new - df_last + np.sum(buf, axis=0)/size)
-                logging.info("step {} update gradient from {}".format(j, dst))
+                if DEBUG:
+                    logging.info("step {} update gradient from {}".format(j, dst))
 
                 if sample == j:
                     x_stored -= x_stored - x

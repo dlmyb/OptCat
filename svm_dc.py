@@ -67,6 +67,7 @@ while True:
     u = u + x - z
     
     if i % 20 == 0:
+        # Save intermediate result
         mpireduce(x, filename="xvals/xval{:03}.npy".format(i))
 
     i += 1
