@@ -8,15 +8,15 @@ Beginning
 
 Since Python is built on C, it's possible to wrap a MPI library for Python to running MPI program. Hence we have `MPI4Py <https://mpi4py.readthedocs.io/en/stable/>`_.
 
-Why write this post? There are few document relating MPI4Py, and most of them lack of example codes. Sometimes you have to figure out these primitives by reading MPI document and MPI4Py source code.
+Why write this post? There are few document relating MPI4Py, and most of them lack of example codes. Sometimes you have to figure out these primitives by reading MPI document and MPI4Py source code. This post would also help you understand the MPI primitives used in our codes.
 
-Most of following aspects are generlized from our coding experience, recommend you read this `overview <https://mpi4py.readthedocs.io/en/stable/overview.html>`_ before you start to read our post.
+Most of following aspects are generlized from our coding experience, we recommend you read this `overview <https://mpi4py.readthedocs.io/en/stable/overview.html>`_.
 
 ^^^^^^^^^^^^^^^^^^^
 Two style functions
 ^^^^^^^^^^^^^^^^^^^
 
-In some communication functions, there exists two styles you could choose, one could pass a buffer similar to MPI, one could pass a Python object which could be compressed as a pickle. For details see `this post <https://mpi4py.readthedocs.io/en/stable/tutorial.html>`_. In most cases, we would follow MPI style. 
+In some communication functions, there exists two styles you can choose, one could pass a buffer similar to MPI, one could pass a Python object which could be compressed as a pickle. For details see `this post <https://mpi4py.readthedocs.io/en/stable/tutorial.html>`_. In most cases, we would follow MPI style. 
 
 ^^^^^^^^^^^^^^^^^^^^
 Default Communicator
@@ -31,14 +31,14 @@ Collective Communication
 
 .. image :: https://computing.llnl.gov/tutorials/mpi/images/collective_comm.gif 
 
-We have a example code `[collective.py] <https://github.com/dlmyb/OptCat/blob/master/collective.py>`_ , which is composed of ``Send`` and ``Recv`` to help you understand. And MPI have other collective primitives except we mentioned above, here's a `slide <http://wgropp.cs.illinois.edu/courses/cs598-s16/lectures/lecture29.pdf>`_ from UIUC providing more details about collective communication.
+We have a example code `[collective.py] <https://github.com/dlmyb/OptCat/blob/master/misc/collective.py>`_ , which is composed of ``Send`` and ``Recv`` to help you understand. And MPI have other collective primitives except we mentioned above, here's a `slide <http://wgropp.cs.illinois.edu/courses/cs598-s16/lectures/lecture29.pdf>`_ from UIUC providing more details about collective communication.
 
 
 -----------------------
 One-sided communication
 -----------------------
 
-In common scenario, the receiver and sender need both use expcilit primitives to start a communication. However, it's not suitable to using expcilit primitives when others access a specific node memory frequently.
+In common scenario, the receiver and sender need both use expcilit primitives (e.g. `send`, `recv`) in communication. However, it will confuse programmer in some cases, like others access one specific node memory frequently.
 
 There are three ways to start/end a one-sided communication.
 
@@ -47,7 +47,7 @@ There are three ways to start/end a one-sided communication.
 3. ``Lock``, ``Unlock``
 
 .. warning ::
-    The ``Lock`` and ``Unlock`` doesn't stand for mutex lock, it's just a syntax similar to the others. One-sided communication won't consider the data consistency problem. 
+    The ``Lock`` and ``Unlock`` doesn't stand for mutex lock, it's just a syntax similar to the others. 
 
 During cummunication, you could choose following common data movement primitives.
 
@@ -56,11 +56,13 @@ During cummunication, you could choose following common data movement primitives
 * ``Accumulate(self, origin, target_rank, target=None, op=SUM)``
 * ... More
 
-In some specific primitives, such as ``Get, Put``, there exists a parameter ``target``, it's a ``(target_disp, target_count, target_datatype)`` tuple and it locates a memory address similar to MPI. Another example `[one_sided.py] <https://github.com/dlmyb/OptCat/blob/master/one_sided.py>`_ explains the details.
+In some specific primitives, such as ``Get, Put``, there exists a parameter ``target``, it's a ``(target_disp, target_count, target_datatype)`` tuple and it locates a memory address similar to MPI. Another example `[one_sided.py] <https://github.com/dlmyb/OptCat/blob/master/misc/one_sided.py>`_ explains the details.
 
-We provide example codes relating asynchronous gradient method using one-sided communication `[gd_async.py] <https://github.com/dlmyb/OptCat/blob/master/gd_async.py>`_. Also we list some helpful reading.
+We provide example codes relating gradient method using one-sided communication `[gd_async.py] <https://github.com/dlmyb/OptCat/blob/master/gd.py>`_. 
 
-In Python, you need to allocate a numpy array as the MPI Window. When you update the window in local process, do not write `x = x + y`, you will get a new x but the window won't update. The right way is `x += y`.
+In Python, you need to allocate a numpy array as the MPI Window. When you update the window in local process, do not write `x = x + y`, you will get a new x but the window won't update. The right way is `x += y`, similar to `[saga.py] <https://github.com/dlmyb/OptCat/blob/vr/saga.py>`_ Or directly call `Win` functions with specific `target_rank`, similar to `[gd_async.py] <https://github.com/dlmyb/OptCat/blob/master/gd.py>`_.
+
+Here are some helpful reading help you understand one_sided communication.
 
 1. Lecture slides `[1] <http://wgropp.cs.illinois.edu/courses/cs598-s16/lectures/lecture34.pdf>`_ `[2] <http://wgropp.cs.illinois.edu/courses/cs598-s16/lectures/lecture35.pdf>`_ from UIUC.
 2. DeinoMPI `manual <https://mpi.deino.net/mpi_functions/index.htm>`_ , it provide simple codes.
@@ -71,7 +73,7 @@ In Python, you need to allocate a numpy array as the MPI Window. When you update
 Non-blocking communication
 --------------------------
 
-When a process is calling ``Send`` or ``Recv``, it won't proceed until communication finished, which called blocking communication. Blocking communication actually performs a synchronous role, it may cause deadlock if program doesn't handle it well. If you don't need a synchronous communication, you could choose non-blocking. (If you are familiar with Javascript/Python3+, recall async/await model.)
+When a process is calling ``Send`` or ``Recv``, it won't proceed until communication finished, which are called blocking communication. Blocking communication performs a synchronous role, it may cause deadlock if program doesn't handle it well. If you don't need a synchronous communication, you may choose non-blocking functions. (If you are familiar with Javascript/Python3+, recall async/await model.)
 
 ------------
 Probing node
