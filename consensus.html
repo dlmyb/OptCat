@@ -1,0 +1,323 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Consensus Optimization &#8212; OptCat  documentation</title>
+    <link rel="stylesheet" href="_static/sphinx13.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="canonical" href="http://www.sphinx-doc.org/en/master/consensus.html" />
+
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,700'
+          rel='stylesheet' type='text/css' />
+ 
+    <style type="text/css">
+      table.right { float: right; margin-left: 20px; }
+      table.right td { border: 1px solid #ccc; }
+      
+    </style>
+    <script>
+      // intelligent scrolling of the sidebar content
+      $(window).scroll(function() {
+        var sb = $('.sphinxsidebarwrapper');
+        var win = $(window);
+        var sbh = sb.height();
+        var offset = $('.sphinxsidebar').position()['top'];
+        var wintop = win.scrollTop();
+        var winbot = wintop + win.innerHeight();
+        var curtop = sb.position()['top'];
+        var curbot = curtop + sbh;
+        // does sidebar fit in window?
+        if (sbh < win.innerHeight()) {
+          // yes: easy case -- always keep at the top
+          sb.css('top', $u.min([$u.max([0, wintop - offset - 10]),
+                                $(document).height() - sbh - 200]));
+        } else {
+          // no: only scroll if top/bottom edge of sidebar is at
+          // top/bottom edge of window
+          if (curtop > wintop && curbot > winbot) {
+            sb.css('top', $u.max([wintop - offset - 10, 0]));
+          } else if (curtop < wintop && curbot < winbot) {
+            sb.css('top', $u.min([winbot - sbh - offset - 20,
+                                  $(document).height() - sbh - 200]));
+          }
+        }
+      });
+    </script>
+
+  </head><body>
+<div class="pageheader">
+  <ul>
+    <li><a href="index.html">Home</a></li>
+    <li><a href="contents.html">Contents</a> &#187;</li>
+  </ul>
+  
+</div>
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+    <li><a href="contents.html">Contents</a> &#187;</li>
+ 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Consensus Optimization</a><ul>
+<li><a class="reference internal" href="#module-consensus.matrix">Consensus Matrix</a></li>
+<li><a class="reference internal" href="#consensus-algorithms">Consensus Algorithms</a><ul>
+<li><a class="reference internal" href="#centralized-algorithm">Centralized Algorithm</a></li>
+<li><a class="reference internal" href="#decentralized-algorithm">Decentralized Algorithm</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#application">Application</a><ul>
+<li><a class="reference internal" href="#parallel-svm">Parallel SVM</a><ul>
+<li><a class="reference internal" href="#centralized">Centralized</a></li>
+<li><a class="reference internal" href="#decentralized">Decentralized</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="consensus-optimization">
+<h1>Consensus Optimization<a class="headerlink" href="#consensus-optimization" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-consensus.matrix">
+<span id="consensus-matrix"></span><h2>Consensus Matrix<a class="headerlink" href="#module-consensus.matrix" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="consensus.matrix.gen_matrix">
+<code class="sig-prename descclassname">consensus.matrix.</code><code class="sig-name descname">gen_matrix</code><span class="sig-paren">(</span><em class="sig-param">n</em>, <em class="sig-param">edges</em><span class="sig-paren">)</span><a class="headerlink" href="#consensus.matrix.gen_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>See <a class="reference external" href="https://nali.seas.harvard.edu/files/nali/files/2017tcns_smoothness_dist_opt.pdf">Eq4 in [Na Li et al]</a>.</p>
+<p>Based on edge set of graph, return a feasible consensus matrix.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n</strong> (<em>int</em>) – number of vertex</p></li>
+<li><p><strong>edges</strong> (<em>List</em><em>[</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – The list for edge pair</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>consensus matrix</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>numpy.array</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="consensus.matrix.w_feasible">
+<code class="sig-prename descclassname">consensus.matrix.</code><code class="sig-name descname">w_feasible</code><span class="sig-paren">(</span><em class="sig-param">W</em><span class="sig-paren">)</span><a class="headerlink" href="#consensus.matrix.w_feasible" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if W is a feasible consensus matrix.
+The consenus should satisfied following constraints:</p>
+<div class="math notranslate nohighlight">
+\[W = W^T \quad \mathcal{1}^T W = \mathcal{1}^T\]</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>W</strong> (<em>numpy.array</em>) – consensus matrix</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="consensus.matrix.ring_matrix">
+<code class="sig-prename descclassname">consensus.matrix.</code><code class="sig-name descname">ring_matrix</code><span class="sig-paren">(</span><em class="sig-param">n</em><span class="sig-paren">)</span><a class="headerlink" href="#consensus.matrix.ring_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>return a ring-topology matrix</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>n</strong> (<em>int</em>) – int, number of nodes</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>consensus matrix</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>numpy.array</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="consensus-algorithms">
+<h2>Consensus Algorithms<a class="headerlink" href="#consensus-algorithms" title="Permalink to this headline">¶</a></h2>
+<p>In <a class="reference external" href="https://hanshuo.people.uic.edu/papers/han2019sdd.pdf">[Shuo’s paper]</a> , it mentioned two type of algorithms for solve the consensus optimization problem.
+Here we take least-square as a example,</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\min \quad \sum_{i=1}^N{||A_i x + b_i||^2_2} \\
+A_i \in \mathbb{R}^{m_i \times n} \quad b_i \in \mathbb{R}^{m_i}\end{split}\]</div>
+<p>We let <span class="math notranslate nohighlight">\(f_i(x_i) = ||A_i x_i + b_i||^2_2\)</span>, therefore we have,</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\min \quad &amp;\sum_{i=1}^N f_i(x_i) \\
+&amp; x_i - z = 0\end{split}\]</div>
+<p>Solving by ADMM, we have</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}x^{k+1}_i &amp;= (A_i^T A_i + \rho \cdot I)^{-1} (A_i^T b + \bar{x}^k - y^k_i) \\
+y^{k+1}_i &amp;= y_i^k + \rho \cdot (x^{k+1} - \bar{x}^{k+1})\end{split}\]</div>
+<p>We build a <cite>consensus</cite> module for solving consensus optimization under MPI platform, you could use following methods to achieve <span class="math notranslate nohighlight">\(\bar{x}\)</span>.</p>
+<div class="section" id="centralized-algorithm">
+<h3>Centralized Algorithm<a class="headerlink" href="#centralized-algorithm" title="Permalink to this headline">¶</a></h3>
+<p>In our consensus library, <cite>mpireduce</cite> is similar with average function.</p>
+<span class="target" id="module-consensus"></span><dl class="function">
+<dt id="consensus.mpireduce">
+<code class="sig-prename descclassname">consensus.</code><code class="sig-name descname">mpireduce</code><span class="sig-paren">(</span><em class="sig-param">target</em>, <em class="sig-param">func=np.mean</em>, <em class="sig-param">filename=None</em><span class="sig-paren">)</span><a class="headerlink" href="#consensus.mpireduce" title="Permalink to this definition">¶</a></dt>
+<dd><p>Centralized consensus module based on MPI, similar with reduce op on MPI.
+You could define your <cite>func</cite> as a reduce function, such as doing SVD on the gather matrix,
+then boardcast the maximum sigma to every agents.
+The <cite>filename</cite> needs to define if you want to storage the gather matrix, it will be placed under “./tmp” folder</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>target</strong> (<em>numpy.array</em>) – the consensus object</p></li>
+<li><p><strong>func</strong> (<em>function</em>) – reduce op</p></li>
+<li><p><strong>filename</strong> (<em>str</em>) – the filename</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>average result</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>numpy.array</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p>Example code is at <a class="reference external" href="https://github.com/dlmyb/OptCat/blob/master/admm.py">admm.py</a>.</p>
+</div>
+<div class="section" id="decentralized-algorithm">
+<h3>Decentralized Algorithm<a class="headerlink" href="#decentralized-algorithm" title="Permalink to this headline">¶</a></h3>
+<p>Given a consensus matrix <span class="math notranslate nohighlight">\(W\)</span>, we need to build a <cite>GCon</cite> for each variable which needs to average.</p>
+<dl class="class">
+<dt id="consensus.GCon">
+<em class="property">class </em><code class="sig-prename descclassname">consensus.</code><code class="sig-name descname">GCon</code><a class="headerlink" href="#consensus.GCon" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decentralized consensus module based on MPI</p>
+<dl class="method">
+<dt id="consensus.GCon.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">features</em>, <em class="sig-param">w</em><span class="sig-paren">)</span><a class="headerlink" href="#consensus.GCon.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>features</strong> (<em>int</em>) – dimention</p></li>
+<li><p><strong>w</strong> (<em>numpy.array</em>) – consensus matrix</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="consensus.GCon.__call__">
+<code class="sig-name descname">__call__</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">x</em><span class="sig-paren">)</span><a class="headerlink" href="#consensus.GCon.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>numpy.array</em>) – a <cite>features</cite> dimention vector</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>average result</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>numpy.array</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<p>Example code is at <a class="reference external" href="https://github.com/dlmyb/OptCat/blob/master/admm_dc.py">admm_dc.py</a>, we also provide a gradient descent version <a class="reference external" href="https://github.com/dlmyb/OptCat/blob/master/gd_dc.py">gd_dc.py</a>.</p>
+</div>
+</div>
+<div class="section" id="application">
+<h2>Application<a class="headerlink" href="#application" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="parallel-svm">
+<h3>Parallel SVM<a class="headerlink" href="#parallel-svm" title="Permalink to this headline">¶</a></h3>
+<p>We followed <a class="reference external" href="https://stanford.edu/~boyd/papers/pdf/admm_distr_stats.pdf">[Boyd et al]</a> and implement corresponding algorithm on Python.</p>
+<p>Giving the <span class="math notranslate nohighlight">\(X \in \mathbb{R}^{m_i \times n}, y \in \{+1, -1\}^{m_i}, \lambda \in \mathbb{R}\)</span>, the SVM optimization problem is following:</p>
+<div class="math notranslate nohighlight">
+\[\min \quad \frac{1}{2 \lambda} || \omega ||^2_2 + \sum_{i=1}^{m_i} \biggl[ 1 - y_i(\omega^T x_i+b)\biggr]^+\]</div>
+<p>We slightly modify the L2-regularizer term to <span class="math notranslate nohighlight">\(||[w, b]^T||^2_2\)</span>. Let</p>
+<div class="math notranslate nohighlight">
+\[f = \bigl[ \omega, b \bigr]^T, A_i \in \mathbb{R}^{m_i \times (n+1)}, (A_i)_j = \bigl[ -y_j \cdot x_j, -y_j \bigr]\]</div>
+<p>Therefore, we would have the following problem:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\min \quad &amp;\sum_{i=1}^N \mathbb{1}^T \bigl[ 1 + A_i \cdot f_i \bigr]^+ + \frac{1}{2 \lambda} || z ||^2_2 \\
+&amp; s.t \quad f_i - z = 0\end{split}\]</div>
+<p>Solving by ADMM algorithm, we have updates on <a class="reference external" href="https://stanford.edu/~boyd/papers/pdf/admm_distr_stats.pdf">[p66 8.2.3]</a>.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The currect z-update is <span class="math notranslate nohighlight">\(z^{k+1} := \frac{N \rho}{(1/ \lambda) + N \rho}(\bar{x}^{k+1}+\bar{u}^k)\)</span>.</p>
+</div>
+<div class="section" id="centralized">
+<h4>Centralized<a class="headerlink" href="#centralized" title="Permalink to this headline">¶</a></h4>
+<p>See example code <a class="reference external" href="https://github.com/dlmyb/OptCat/blob/master/svm.py">svm.py</a>.</p>
+</div>
+<div class="section" id="decentralized">
+<h4>Decentralized<a class="headerlink" href="#decentralized" title="Permalink to this headline">¶</a></h4>
+<p>See example code <a class="reference external" href="https://github.com/dlmyb/OptCat/blob/master/svm_dc.py">svm_dc.py</a>, Details are  <a class="reference external" href="https://github.com/dlmyb/OptCat/blob/master/svm_view.ipynb">svm_view.ipynb</a>.</p>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+    <li><a href="contents.html">Contents</a> &#187;</li>
+ 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, Yinbin Ma.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.3.1.
+    </div>
+  </body>
+</html>

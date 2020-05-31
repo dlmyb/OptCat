@@ -1,0 +1,201 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>MPI4Py 101 &#8212; OptCat  documentation</title>
+    <link rel="stylesheet" href="_static/sphinx13.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="canonical" href="http://www.sphinx-doc.org/en/master/mpi101.html" />
+
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,700'
+          rel='stylesheet' type='text/css' />
+ 
+    <style type="text/css">
+      table.right { float: right; margin-left: 20px; }
+      table.right td { border: 1px solid #ccc; }
+      
+    </style>
+    <script>
+      // intelligent scrolling of the sidebar content
+      $(window).scroll(function() {
+        var sb = $('.sphinxsidebarwrapper');
+        var win = $(window);
+        var sbh = sb.height();
+        var offset = $('.sphinxsidebar').position()['top'];
+        var wintop = win.scrollTop();
+        var winbot = wintop + win.innerHeight();
+        var curtop = sb.position()['top'];
+        var curbot = curtop + sbh;
+        // does sidebar fit in window?
+        if (sbh < win.innerHeight()) {
+          // yes: easy case -- always keep at the top
+          sb.css('top', $u.min([$u.max([0, wintop - offset - 10]),
+                                $(document).height() - sbh - 200]));
+        } else {
+          // no: only scroll if top/bottom edge of sidebar is at
+          // top/bottom edge of window
+          if (curtop > wintop && curbot > winbot) {
+            sb.css('top', $u.max([wintop - offset - 10, 0]));
+          } else if (curtop < wintop && curbot < winbot) {
+            sb.css('top', $u.min([winbot - sbh - offset - 20,
+                                  $(document).height() - sbh - 200]));
+          }
+        }
+      });
+    </script>
+
+  </head><body>
+<div class="pageheader">
+  <ul>
+    <li><a href="index.html">Home</a></li>
+    <li><a href="contents.html">Contents</a> &#187;</li>
+  </ul>
+  
+</div>
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+    <li><a href="contents.html">Contents</a> &#187;</li>
+ 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">MPI4Py 101</a><ul>
+<li><a class="reference internal" href="#beginning">Beginning</a><ul>
+<li><a class="reference internal" href="#two-style-functions">Two style functions</a></li>
+<li><a class="reference internal" href="#default-communicator">Default Communicator</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#collective-communication">Collective Communication</a></li>
+<li><a class="reference internal" href="#one-sided-communication">One-sided communication</a></li>
+<li><a class="reference internal" href="#non-blocking-communication">Non-blocking communication</a></li>
+<li><a class="reference internal" href="#probing-node">Probing node</a></li>
+</ul>
+</li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="mpi4py-101">
+<h1>MPI4Py 101<a class="headerlink" href="#mpi4py-101" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="beginning">
+<h2>Beginning<a class="headerlink" href="#beginning" title="Permalink to this headline">¶</a></h2>
+<p>Since Python is built on C, it’s possible to wrap a MPI library for Python to running MPI program. Hence we have <a class="reference external" href="https://mpi4py.readthedocs.io/en/stable/">MPI4Py</a>.</p>
+<p>Why write this post? There are few document relating MPI4Py, and most of them lack of example codes. Sometimes you have to figure out these primitives by reading MPI document and MPI4Py source code. This post would also help you understand the MPI primitives used in our codes.</p>
+<p>Most of following aspects are generlized from our coding experience, we recommend you read this <a class="reference external" href="https://mpi4py.readthedocs.io/en/stable/overview.html">overview</a>.</p>
+<div class="section" id="two-style-functions">
+<h3>Two style functions<a class="headerlink" href="#two-style-functions" title="Permalink to this headline">¶</a></h3>
+<p>In some communication functions, there exists two styles you can choose, one could pass a buffer similar to MPI, one could pass a Python object which could be compressed as a pickle. For details see <a class="reference external" href="https://mpi4py.readthedocs.io/en/stable/tutorial.html">this post</a>. In most cases, we would follow MPI style.</p>
+</div>
+<div class="section" id="default-communicator">
+<h3>Default Communicator<a class="headerlink" href="#default-communicator" title="Permalink to this headline">¶</a></h3>
+<p>Communicator is a instance connecting different process. If you need interprocess message passing on MPI, you will use a default communicator or create one. All MPI process is connected on the default communicator <code class="docutils literal notranslate"><span class="pre">MPI.COMM_WORLD</span></code>. You could create a communication which only covers part of processes.</p>
+</div>
+</div>
+<div class="section" id="collective-communication">
+<h2>Collective Communication<a class="headerlink" href="#collective-communication" title="Permalink to this headline">¶</a></h2>
+<img alt="https://computing.llnl.gov/tutorials/mpi/images/collective_comm.gif" src="https://computing.llnl.gov/tutorials/mpi/images/collective_comm.gif" />
+<p>We have a example code <a class="reference external" href="https://github.com/dlmyb/OptCat/blob/master/misc/collective.py">[collective.py]</a> , which is composed of <code class="docutils literal notranslate"><span class="pre">Send</span></code> and <code class="docutils literal notranslate"><span class="pre">Recv</span></code> to help you understand. And MPI have other collective primitives except we mentioned above, here’s a <a class="reference external" href="http://wgropp.cs.illinois.edu/courses/cs598-s16/lectures/lecture29.pdf">slide</a> from UIUC providing more details about collective communication.</p>
+</div>
+<div class="section" id="one-sided-communication">
+<h2>One-sided communication<a class="headerlink" href="#one-sided-communication" title="Permalink to this headline">¶</a></h2>
+<p>In common scenario, the receiver and sender need both use expcilit primitives (e.g. <cite>send</cite>, <cite>recv</cite>) in communication. However, it will confuse programmer in some cases, like others access one specific node memory frequently.</p>
+<p>There are three ways to start/end a one-sided communication.</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Fence</span></code>. <code class="docutils literal notranslate"><span class="pre">Fence</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Start/Wait</span></code>, <code class="docutils literal notranslate"><span class="pre">Post/Complete</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Lock</span></code>, <code class="docutils literal notranslate"><span class="pre">Unlock</span></code></p></li>
+</ol>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">Lock</span></code> and <code class="docutils literal notranslate"><span class="pre">Unlock</span></code> doesn’t stand for mutex lock, it’s just a syntax similar to the others.</p>
+</div>
+<p>During cummunication, you could choose following common data movement primitives.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Get(self,</span> <span class="pre">origin,</span> <span class="pre">target_rank,</span> <span class="pre">target=None)</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Put(self,</span> <span class="pre">origin,</span> <span class="pre">target_rank,</span> <span class="pre">target=None)</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Accumulate(self,</span> <span class="pre">origin,</span> <span class="pre">target_rank,</span> <span class="pre">target=None,</span> <span class="pre">op=SUM)</span></code></p></li>
+<li><p>… More</p></li>
+</ul>
+<p>In some specific primitives, such as <code class="docutils literal notranslate"><span class="pre">Get,</span> <span class="pre">Put</span></code>, there exists a parameter <code class="docutils literal notranslate"><span class="pre">target</span></code>, it’s a <code class="docutils literal notranslate"><span class="pre">(target_disp,</span> <span class="pre">target_count,</span> <span class="pre">target_datatype)</span></code> tuple and it locates a memory address similar to MPI. Another example <a class="reference external" href="https://github.com/dlmyb/OptCat/blob/master/misc/one_sided.py">[one_sided.py]</a> explains the details.</p>
+<p>We provide example codes relating gradient method using one-sided communication <a class="reference external" href="https://github.com/dlmyb/OptCat/blob/master/gd.py">[gd_async.py]</a>.</p>
+<p>In Python, you need to allocate a numpy array as the MPI Window. When you update the window in local process, do not write <cite>x = x + y</cite>, you will get a new x but the window won’t update. The right way is <cite>x += y</cite>, similar to <a class="reference external" href="https://github.com/dlmyb/OptCat/blob/vr/saga.py">[saga.py]</a> Or directly call <cite>Win</cite> functions with specific <cite>target_rank</cite>, similar to <a class="reference external" href="https://github.com/dlmyb/OptCat/blob/master/gd.py">[gd_async.py]</a>.</p>
+<p>Here are some helpful reading help you understand one_sided communication.</p>
+<ol class="arabic simple">
+<li><p>Lecture slides <a class="reference external" href="http://wgropp.cs.illinois.edu/courses/cs598-s16/lectures/lecture34.pdf">[1]</a> <a class="reference external" href="http://wgropp.cs.illinois.edu/courses/cs598-s16/lectures/lecture35.pdf">[2]</a> from UIUC.</p></li>
+<li><p>DeinoMPI <a class="reference external" href="https://mpi.deino.net/mpi_functions/index.htm">manual</a> , it provide simple codes.</p></li>
+<li><p>MPI4Py source code <a class="reference external" href="https://bitbucket.org/mpi4py/mpi4py/src/master/src/mpi4py/MPI/Win.pyx">Win.pyx</a></p></li>
+</ol>
+</div>
+<div class="section" id="non-blocking-communication">
+<h2>Non-blocking communication<a class="headerlink" href="#non-blocking-communication" title="Permalink to this headline">¶</a></h2>
+<p>When a process is calling <code class="docutils literal notranslate"><span class="pre">Send</span></code> or <code class="docutils literal notranslate"><span class="pre">Recv</span></code>, it won’t proceed until communication finished, which are called blocking communication. Blocking communication performs a synchronous role, it may cause deadlock if program doesn’t handle it well. If you don’t need a synchronous communication, you may choose non-blocking functions. (If you are familiar with Javascript/Python3+, recall async/await model.)</p>
+</div>
+<div class="section" id="probing-node">
+<h2>Probing node<a class="headerlink" href="#probing-node" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">Probe</span></code> helps to check if recevied message from others. It simply codes when you implement master-worker topology. Here’s a simple <a class="reference external" href="https://gist.github.com/dlmyb/d3b7cfac2d1287ccce92b2ae0c84309e">demo</a> for producer/consumer problem.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+    <li><a href="contents.html">Contents</a> &#187;</li>
+ 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, Yinbin Ma.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.3.1.
+    </div>
+  </body>
+</html>
